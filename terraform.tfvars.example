@@ -1,0 +1,5 @@
+# LaunchDarkly API Configuration
+# Copy this file to terraform.tfvars and add your actual API token
+
+launchdarkly_access_token = "your-launchdarkly-api-token-here"
+view_maintainer_id = "your-launchdarkly-member-id-here"

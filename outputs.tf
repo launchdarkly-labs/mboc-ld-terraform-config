@@ -21,10 +21,10 @@ output "custom_roles" {
       key  = launchdarkly_custom_role.ii_ld_admins.key
       name = launchdarkly_custom_role.ii_ld_admins.name
     }
-    ii_lead_engineers = {
-      id   = launchdarkly_custom_role.ii_lead_engineers.id
-      key  = launchdarkly_custom_role.ii_lead_engineers.key
-      name = launchdarkly_custom_role.ii_lead_engineers.name
+    ii_lead_developers = {
+      id   = launchdarkly_custom_role.ii_lead_developers.id
+      key  = launchdarkly_custom_role.ii_lead_developers.key
+      name = launchdarkly_custom_role.ii_lead_developers.name
     }
     ii_developers = {
       id   = launchdarkly_custom_role.ii_developers.id

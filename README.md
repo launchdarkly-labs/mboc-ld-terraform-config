@@ -1,12 +1,11 @@
 # LaunchDarkly Terraform Management - Interactive Investor
 
-Terraform configuration for managing LaunchDarkly resources for Interactive Investor.
+Terraform configuration for managing LaunchDarkly resources for Interactive Investor using an existing project.
 
 ## Project Structure
 
-- **Project**: Interactive Investor (`interactive-investor`)
-- **Environments**: Development (devl), QA, QA2, Production (prod)
-- **Views**: Squad A, Squad B, Squad C
+- **Project**: Uses existing LaunchDarkly project (`default`)
+- **Views**: II: Squad A (`ii-squad-a`), II: Squad B (`ii-squad-b`), II: Squad C (`ii-squad-c`)
 - **Custom Roles**: LD Admins, Lead Engineers, Engineers, Business, QA Testers
 
 ## Files
@@ -23,7 +22,7 @@ Terraform configuration for managing LaunchDarkly resources for Interactive Inve
    cp terraform.tfvars.example terraform.tfvars
    ```
 
-2. Edit `terraform.tfvars` with your LaunchDarkly API token
+2. Edit `terraform.tfvars` with your LaunchDarkly API token and member ID
 
 3. Initialize and apply:
    ```bash
@@ -34,4 +33,6 @@ Terraform configuration for managing LaunchDarkly resources for Interactive Inve
 
 ## Configuration
 
-The configuration is pre-configured for Interactive Investor with Development, QA, QA2, and Production environments.
+This configuration uses an existing LaunchDarkly project (`default`) and creates:
+- **Views**: Three squad-specific views for organizing feature flags
+- **Custom Roles**: Five custom roles with different permission levels for various team members

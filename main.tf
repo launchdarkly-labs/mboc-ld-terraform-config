@@ -3,7 +3,7 @@ terraform {
   required_providers {
     launchdarkly = {
       source  = "launchdarkly/launchdarkly"
-      version = "2.26.0-beta.1"
+      version = "2.26.0-beta.4"
     }
   }
 }
@@ -48,6 +48,57 @@ resource "launchdarkly_view" "squad_c" {
   tags = ["squad-c", "interactive-investor"]
 }
 
+# Teams
+resource "launchdarkly_team" "squad_a" {
+  key         = "ii-squad-a"
+  name        = "II: Squad A"
+  description = "Team for Squad A members with access to Squad A feature flags"
+  maintainers = [var.team_maintainer_id]
+  member_ids  = []
+  
+  role_attributes {
+    key    = "viewKeys"
+    values = ["ii-squad-a"]
+  }
+  
+  lifecycle {
+    ignore_changes = [member_ids]
+  }
+}
+
+resource "launchdarkly_team" "squad_b" {
+  key         = "ii-squad-b"
+  name        = "II: Squad B"
+  description = "Team for Squad B members with access to Squad B feature flags"
+  maintainers = [var.team_maintainer_id]
+  member_ids  = []
+  
+  role_attributes {
+    key    = "viewKeys"
+    values = ["ii-squad-b"]
+  }
+  
+  lifecycle {
+    ignore_changes = [member_ids]
+  }
+}
+
+resource "launchdarkly_team" "squad_c" {
+  key         = "ii-squad-c"
+  name        = "II: Squad C"
+  description = "Team for Squad C members with access to Squad C feature flags"
+  maintainers = [var.team_maintainer_id]
+  member_ids  = []
+  
+  role_attributes {
+    key    = "viewKeys"
+    values = ["ii-squad-c"]
+  }
+  
+  lifecycle {
+    ignore_changes = [member_ids]
+  }
+}
 # Custom Roles
 # LD Admins Role - full access to LaunchDarkly (mimics built-in admin role)
 resource "launchdarkly_custom_role" "ii_ld_admins" {

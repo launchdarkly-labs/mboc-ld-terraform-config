@@ -30,6 +30,27 @@ output "views" {
   }
 }
 
+output "teams" {
+  description = "Teams"
+  value = {
+    squad_a = {
+      id   = launchdarkly_team.squad_a.id
+      key  = launchdarkly_team.squad_a.key
+      name = launchdarkly_team.squad_a.name
+    }
+    squad_b = {
+      id   = launchdarkly_team.squad_b.id
+      key  = launchdarkly_team.squad_b.key
+      name = launchdarkly_team.squad_b.name
+    }
+    squad_c = {
+      id   = launchdarkly_team.squad_c.id
+      key  = launchdarkly_team.squad_c.key
+      name = launchdarkly_team.squad_c.name
+    }
+  }
+}
+
 output "custom_roles" {
   description = "Custom roles"
   value = {

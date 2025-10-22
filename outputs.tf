@@ -1,16 +1,54 @@
 output "interactive_investor_project" {
   description = "Interactive Investor project details"
   value = {
-    id   = launchdarkly_project.interactive_investor.id
-    key  = launchdarkly_project.interactive_investor.key
-    name = launchdarkly_project.interactive_investor.name
+    id   = data.launchdarkly_project.interactive_investor.id
+    key  = data.launchdarkly_project.interactive_investor.key
+    name = data.launchdarkly_project.interactive_investor.name
   }
 }
 
-output "environments" {
-  description = "Interactive Investor environments (nested within project)"
-  value = launchdarkly_project.interactive_investor.environments
-  sensitive = true
+# Note: Environments output removed as we're not using them in this configuration
+
+output "views" {
+  description = "Views"
+  value = {
+    squad_a = {
+      id   = launchdarkly_view.squad_a.id
+      key  = launchdarkly_view.squad_a.key
+      name = launchdarkly_view.squad_a.name
+    }
+    squad_b = {
+      id   = launchdarkly_view.squad_b.id
+      key  = launchdarkly_view.squad_b.key
+      name = launchdarkly_view.squad_b.name
+    }
+    squad_c = {
+      id   = launchdarkly_view.squad_c.id
+      key  = launchdarkly_view.squad_c.key
+      name = launchdarkly_view.squad_c.name
+    }
+  }
+}
+
+output "teams" {
+  description = "Teams"
+  value = {
+    squad_a = {
+      id   = launchdarkly_team.squad_a.id
+      key  = launchdarkly_team.squad_a.key
+      name = launchdarkly_team.squad_a.name
+    }
+    squad_b = {
+      id   = launchdarkly_team.squad_b.id
+      key  = launchdarkly_team.squad_b.key
+      name = launchdarkly_team.squad_b.name
+    }
+    squad_c = {
+      id   = launchdarkly_team.squad_c.id
+      key  = launchdarkly_team.squad_c.key
+      name = launchdarkly_team.squad_c.name
+    }
+  }
 }
 
 output "custom_roles" {
@@ -40,27 +78,6 @@ output "custom_roles" {
       id   = launchdarkly_custom_role.ii_qa_testers.id
       key  = launchdarkly_custom_role.ii_qa_testers.key
       name = launchdarkly_custom_role.ii_qa_testers.name
-    }
-  }
-}
-
-output "views" {
-  description = "Views"
-  value = {
-    squad_a = {
-      id   = launchdarkly_view.squad_a.id
-      key  = launchdarkly_view.squad_a.key
-      name = launchdarkly_view.squad_a.name
-    }
-    squad_b = {
-      id   = launchdarkly_view.squad_b.id
-      key  = launchdarkly_view.squad_b.key
-      name = launchdarkly_view.squad_b.name
-    }
-    squad_c = {
-      id   = launchdarkly_view.squad_c.id
-      key  = launchdarkly_view.squad_c.key
-      name = launchdarkly_view.squad_c.name
     }
   }
 }

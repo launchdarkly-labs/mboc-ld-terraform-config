@@ -3,7 +3,7 @@ terraform {
   required_providers {
     launchdarkly = {
       source  = "launchdarkly/launchdarkly"
-      version = "2.26.0-beta.1"
+      version = "2.26.0-beta.4"
     }
   }
 }
@@ -12,94 +12,98 @@ provider "launchdarkly" {
   access_token = var.launchdarkly_access_token
 }
 
-# Interactive Investor Project
-resource "launchdarkly_project" "interactive_investor" {
-  key  = "interactive-investor"
-  name = "Interactive Investor"
-  default_client_side_availability {
-    using_environment_id = true
-    using_mobile_key     = true
-  }
-  
-  # Development Environment
-  environments {
-    key   = "devl"
-    name  = "Development"
-    color = "3BBD96"
-  }
-  
-  # QA Environment
-  environments {
-    key   = "qa"
-    name  = "QA"
-    color = "87CEEB"
-  }
-  
-  # QA2 Environment
-  environments {
-    key   = "qa2"
-    name  = "QA2"
-    color = "F6D383"
-  }
-  
-  # Production Environment
-  # Marked as critical, requires comments, and confirmation of changes
-  # Uses ServiceNow for approvals (needs to be configured in ServiceNow)
-  environments {
-    key   = "prod"
-    name  = "Production"
-    color = "F55F4B"
-    critical = true
-    require_comments = true
-    confirm_changes = true
-    approval_settings {
-      required = true
-      # ServiceNow integration is not yet configured in LaunchDarkly - commenting out for now
-      # service_kind = "servicenow"
-      # service_config = {
-      #   template = "sys_id"
-      #   detail_column = "change request column name (justification)"
-      # }
-    }
-  }
+# MB OC Project - Using existing default project
+data "launchdarkly_project" "mb_oc" {
+  key = "mboc"
 }
 
 # Views - used for managing access to feature flags used by the different teams
 resource "launchdarkly_view" "squad_a" {
-  key         = "squad-a"
-  name        = "Squad A"
-  project_key = launchdarkly_project.interactive_investor.key
+  key         = "mb-oc-squad-a"
+  name        = "MB OC: Squad A"
+  project_key = data.launchdarkly_project.mb_oc.key
   description = "View for Squad A's feature flags"
   maintainer_id = var.view_maintainer_id
   generate_sdk_keys = true
-  tags = ["squad-a"]
+  tags = ["squad-a", "mb-oc"]
 }
 
 resource "launchdarkly_view" "squad_b" {
-  key         = "squad-b"
-  name        = "Squad B"
-  project_key = launchdarkly_project.interactive_investor.key
+  key         = "mb-oc-squad-b"
+  name        = "MB OC: Squad B"
+  project_key = data.launchdarkly_project.mb_oc.key
   description = "View for Squad B's feature flags"
   maintainer_id = var.view_maintainer_id
   generate_sdk_keys = true
-  tags = ["squad-b"]
+  tags = ["squad-b", "mb-oc"]
 }
 
 resource "launchdarkly_view" "squad_c" {
-  key         = "squad-c"
-  name        = "Squad C"
-  project_key = launchdarkly_project.interactive_investor.key
+  key         = "mb-oc-squad-c"
+  name        = "MB OC: Squad C"
+  project_key = data.launchdarkly_project.mb_oc.key
   description = "View for Squad C's feature flags"
   maintainer_id = var.view_maintainer_id
   generate_sdk_keys = true
-  tags = ["squad-c"]
+  tags = ["squad-c", "mb-oc"]
 }
 
+# Teams
+resource "launchdarkly_team" "squad_a" {
+  key         = "mb-oc-squad-a"
+  name        = "MB OC: Squad A"
+  description = "Team for Squad A members with access to Squad A feature flags"
+  maintainers = [var.team_maintainer_id]
+  member_ids  = []
+  
+  role_attributes {
+    key    = "viewKeys"
+    values = ["mb-oc-squad-a"]
+  }
+  
+  lifecycle {
+    ignore_changes = [member_ids]
+  }
+}
+
+resource "launchdarkly_team" "squad_b" {
+  key         = "mb-oc-squad-b"
+  name        = "MB OC: Squad B"
+  description = "Team for Squad B members with access to Squad B feature flags"
+  maintainers = [var.team_maintainer_id]
+  member_ids  = []
+  
+  role_attributes {
+    key    = "viewKeys"
+    values = ["mb-oc-squad-b"]
+  }
+  
+  lifecycle {
+    ignore_changes = [member_ids]
+  }
+}
+
+resource "launchdarkly_team" "squad_c" {
+  key         = "mb-oc-squad-c"
+  name        = "MB OC: Squad C"
+  description = "Team for Squad C members with access to Squad C feature flags"
+  maintainers = [var.team_maintainer_id]
+  member_ids  = []
+  
+  role_attributes {
+    key    = "viewKeys"
+    values = ["mb-oc-squad-c"]
+  }
+  
+  lifecycle {
+    ignore_changes = [member_ids]
+  }
+}
 # Custom Roles
 # LD Admins Role - full access to LaunchDarkly (mimics built-in admin role)
-resource "launchdarkly_custom_role" "ii_ld_admins" {
-  key         = "ii-ld-admins"
-  name        = "II: LD Admins"
+resource "launchdarkly_custom_role" "mb_oc_ld_admins" {
+  key         = "mb-oc-ld-admins"
+  name        = "MB OC: LD Admins"
   description = "Full administrative access to all LaunchDarkly resources including account settings, integrations, members, and all project resources"
   base_permissions = "no_access"
   
@@ -278,10 +282,10 @@ resource "launchdarkly_custom_role" "ii_ld_admins" {
   }
 }
 
-# Lead Developers Role - scoped to specific view(s), can manage flags in non-critical environments, can request changes in critical environments
-resource "launchdarkly_custom_role" "ii_lead_developers" {
-  key         = "ii-lead-developers"
-  name        = "II: Lead Developers"
+# Lead Engineers Role - scoped to specific view(s), can manage flags in non-critical environments, can request changes in critical environments
+resource "launchdarkly_custom_role" "mb_oc_lead_engineers" {
+  key         = "mb-oc-lead-engineers"
+  name        = "MB OC: Lead Engineers"
   description = "Can manage all flag actions in non-critical environments and submit change requests for critical environments. Full access to experiments, metrics, segments, and release pipelines. Scoped to specific views via role attributes."
   base_permissions = "no_access"
   
@@ -372,9 +376,9 @@ resource "launchdarkly_custom_role" "ii_lead_developers" {
 }
 
 # Engineers Role - scoped to specific view(s), can only modify flags in non-critical environments
-resource "launchdarkly_custom_role" "ii_developers" {
-  key         = "ii-developers"
-  name        = "II: Developers"
+resource "launchdarkly_custom_role" "mb_oc_developers" {
+  key         = "mb-oc-developers"
+  name        = "MB OC: Developers"
   description = "Can modify flags and segments in non-critical environments only. View-only access to critical environments. Full access to experiments, metrics, holdouts, and layers. No access to release pipelines. Scoped to specific views via role attributes."
   base_permissions = "no_access"
   
@@ -442,9 +446,9 @@ resource "launchdarkly_custom_role" "ii_developers" {
 }
 
 # Business Role - read-only access to flags, can manage experimentation resources
-resource "launchdarkly_custom_role" "ii_business_users" {
-  key         = "ii-business-users"
-  name        = "II: Business Users"
+resource "launchdarkly_custom_role" "mb_oc_business_users" {
+  key         = "mb-oc-business-users"
+  name        = "MB OC: Business Users"
   description = "Read-only access to flags. Full access to manage experiments, holdouts, layers, metrics, and metric groups in all environments. Ideal for product managers and business analysts running experiments."
   base_permissions = "no_access"
   
@@ -499,9 +503,9 @@ resource "launchdarkly_custom_role" "ii_business_users" {
 }
 
 # QA Testers Role - can modify flag targeting in non-critical environments
-resource "launchdarkly_custom_role" "ii_qa_testers" {
-  key         = "ii-qa-testers"
-  name        = "II: QA Testers"
+resource "launchdarkly_custom_role" "mb_oc_qa_testers" {
+  key         = "mb-oc-qa-testers"
+  name        = "MB OC: QA Testers"
   description = "Can modify flag targeting (toggle flags, update rules, targets, and prerequisites) in non-critical environments for testing purposes. Scoped to specific views via role attributes."
   base_permissions = "no_access"
   

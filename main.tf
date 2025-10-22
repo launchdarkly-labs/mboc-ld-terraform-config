@@ -14,7 +14,7 @@ provider "launchdarkly" {
 
 # MB OC Project - Using existing default project
 data "launchdarkly_project" "mb_oc" {
-  key = "mb-oc"
+  key = "mboc"
 }
 
 # Views - used for managing access to feature flags used by the different teams

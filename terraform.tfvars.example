@@ -3,3 +3,4 @@
 
 launchdarkly_access_token = "your-launchdarkly-api-token-here"
 view_maintainer_id = "your-launchdarkly-member-id-here"
+team_maintainer_id = "your-launchdarkly-member-id-here"

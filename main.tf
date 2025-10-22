@@ -12,53 +12,53 @@ provider "launchdarkly" {
   access_token = var.launchdarkly_access_token
 }
 
-# Interactive Investor Project - Using existing default project
-data "launchdarkly_project" "interactive_investor" {
-  key = "default"
+# MB OC Project - Using existing default project
+data "launchdarkly_project" "mb_oc" {
+  key = "mboc"
 }
 
 # Views - used for managing access to feature flags used by the different teams
 resource "launchdarkly_view" "squad_a" {
-  key         = "ii-squad-a"
-  name        = "II: Squad A"
-  project_key = data.launchdarkly_project.interactive_investor.key
+  key         = "mb-oc-squad-a"
+  name        = "MB OC: Squad A"
+  project_key = data.launchdarkly_project.mb_oc.key
   description = "View for Squad A's feature flags"
   maintainer_id = var.view_maintainer_id
   generate_sdk_keys = true
-  tags = ["squad-a", "interactive-investor"]
+  tags = ["squad-a", "mb-oc"]
 }
 
 resource "launchdarkly_view" "squad_b" {
-  key         = "ii-squad-b"
-  name        = "II: Squad B"
-  project_key = data.launchdarkly_project.interactive_investor.key
+  key         = "mb-oc-squad-b"
+  name        = "MB OC: Squad B"
+  project_key = data.launchdarkly_project.mb_oc.key
   description = "View for Squad B's feature flags"
   maintainer_id = var.view_maintainer_id
   generate_sdk_keys = true
-  tags = ["squad-b", "interactive-investor"]
+  tags = ["squad-b", "mb-oc"]
 }
 
 resource "launchdarkly_view" "squad_c" {
-  key         = "ii-squad-c"
-  name        = "II: Squad C"
-  project_key = data.launchdarkly_project.interactive_investor.key
+  key         = "mb-oc-squad-c"
+  name        = "MB OC: Squad C"
+  project_key = data.launchdarkly_project.mb_oc.key
   description = "View for Squad C's feature flags"
   maintainer_id = var.view_maintainer_id
   generate_sdk_keys = true
-  tags = ["squad-c", "interactive-investor"]
+  tags = ["squad-c", "mb-oc"]
 }
 
 # Teams
 resource "launchdarkly_team" "squad_a" {
-  key         = "ii-squad-a"
-  name        = "II: Squad A"
+  key         = "mb-oc-squad-a"
+  name        = "MB OC: Squad A"
   description = "Team for Squad A members with access to Squad A feature flags"
   maintainers = [var.team_maintainer_id]
   member_ids  = []
   
   role_attributes {
     key    = "viewKeys"
-    values = ["ii-squad-a"]
+    values = ["mb-oc-squad-a"]
   }
   
   lifecycle {
@@ -67,15 +67,15 @@ resource "launchdarkly_team" "squad_a" {
 }
 
 resource "launchdarkly_team" "squad_b" {
-  key         = "ii-squad-b"
-  name        = "II: Squad B"
+  key         = "mb-oc-squad-b"
+  name        = "MB OC: Squad B"
   description = "Team for Squad B members with access to Squad B feature flags"
   maintainers = [var.team_maintainer_id]
   member_ids  = []
   
   role_attributes {
     key    = "viewKeys"
-    values = ["ii-squad-b"]
+    values = ["mb-oc-squad-b"]
   }
   
   lifecycle {
@@ -84,15 +84,15 @@ resource "launchdarkly_team" "squad_b" {
 }
 
 resource "launchdarkly_team" "squad_c" {
-  key         = "ii-squad-c"
-  name        = "II: Squad C"
+  key         = "mb-oc-squad-c"
+  name        = "MB OC: Squad C"
   description = "Team for Squad C members with access to Squad C feature flags"
   maintainers = [var.team_maintainer_id]
   member_ids  = []
   
   role_attributes {
     key    = "viewKeys"
-    values = ["ii-squad-c"]
+    values = ["mb-oc-squad-c"]
   }
   
   lifecycle {
@@ -101,9 +101,9 @@ resource "launchdarkly_team" "squad_c" {
 }
 # Custom Roles
 # LD Admins Role - full access to LaunchDarkly (mimics built-in admin role)
-resource "launchdarkly_custom_role" "ii_ld_admins" {
-  key         = "ii-ld-admins"
-  name        = "II: LD Admins"
+resource "launchdarkly_custom_role" "mb_oc_ld_admins" {
+  key         = "mb-oc-ld-admins"
+  name        = "MB OC: LD Admins"
   description = "Full administrative access to all LaunchDarkly resources including account settings, integrations, members, and all project resources"
   base_permissions = "no_access"
   
@@ -283,9 +283,9 @@ resource "launchdarkly_custom_role" "ii_ld_admins" {
 }
 
 # Lead Engineers Role - scoped to specific view(s), can manage flags in non-critical environments, can request changes in critical environments
-resource "launchdarkly_custom_role" "ii_lead_engineers" {
-  key         = "ii-lead-engineers"
-  name        = "II: Lead Engineers"
+resource "launchdarkly_custom_role" "mb_oc_lead_engineers" {
+  key         = "mb-oc-lead-engineers"
+  name        = "MB OC: Lead Engineers"
   description = "Can manage all flag actions in non-critical environments and submit change requests for critical environments. Full access to experiments, metrics, segments, and release pipelines. Scoped to specific views via role attributes."
   base_permissions = "no_access"
   
@@ -376,9 +376,9 @@ resource "launchdarkly_custom_role" "ii_lead_engineers" {
 }
 
 # Engineers Role - scoped to specific view(s), can only modify flags in non-critical environments
-resource "launchdarkly_custom_role" "ii_developers" {
-  key         = "ii-developers"
-  name        = "II: Developers"
+resource "launchdarkly_custom_role" "mb_oc_developers" {
+  key         = "mb-oc-developers"
+  name        = "MB OC: Developers"
   description = "Can modify flags and segments in non-critical environments only. View-only access to critical environments. Full access to experiments, metrics, holdouts, and layers. No access to release pipelines. Scoped to specific views via role attributes."
   base_permissions = "no_access"
   
@@ -446,9 +446,9 @@ resource "launchdarkly_custom_role" "ii_developers" {
 }
 
 # Business Role - read-only access to flags, can manage experimentation resources
-resource "launchdarkly_custom_role" "ii_business_users" {
-  key         = "ii-business-users"
-  name        = "II: Business Users"
+resource "launchdarkly_custom_role" "mb_oc_business_users" {
+  key         = "mb-oc-business-users"
+  name        = "MB OC: Business Users"
   description = "Read-only access to flags. Full access to manage experiments, holdouts, layers, metrics, and metric groups in all environments. Ideal for product managers and business analysts running experiments."
   base_permissions = "no_access"
   
@@ -503,9 +503,9 @@ resource "launchdarkly_custom_role" "ii_business_users" {
 }
 
 # QA Testers Role - can modify flag targeting in non-critical environments
-resource "launchdarkly_custom_role" "ii_qa_testers" {
-  key         = "ii-qa-testers"
-  name        = "II: QA Testers"
+resource "launchdarkly_custom_role" "mb_oc_qa_testers" {
+  key         = "mb-oc-qa-testers"
+  name        = "MB OC: QA Testers"
   description = "Can modify flag targeting (toggle flags, update rules, targets, and prerequisites) in non-critical environments for testing purposes. Scoped to specific views via role attributes."
   base_permissions = "no_access"
   

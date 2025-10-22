@@ -1,12 +1,12 @@
-# LaunchDarkly Terraform Management - Interactive Investor
+# LaunchDarkly Terraform Management - MB OC
 
-Terraform configuration for managing LaunchDarkly resources for Interactive Investor using an existing project.
+Terraform configuration for managing LaunchDarkly resources for MB OC using an existing project.
 
 ## Project Structure
 
 - **Project**: Uses existing LaunchDarkly project (`default`)
-- **Views**: II: Squad A (`ii-squad-a`), II: Squad B (`ii-squad-b`), II: Squad C (`ii-squad-c`)
-- **Teams**: II: Squad A, II: Squad B, II: Squad C
+- **Views**: MB OC: Squad A (`mb-oc-squad-a`), MB OC: Squad B (`mb-oc-squad-b`), MB OC: Squad C (`mb-oc-squad-c`)
+- **Teams**: MB OC: Squad A, MB OC: Squad B, MB OC: Squad C
 - **Custom Roles**: LD Admins, Lead Engineers, Engineers, Business, QA Testers
 
 ## Design Logic
@@ -23,7 +23,7 @@ This configuration implements a two-tier authorization model:
 - **Purpose**: Organize members by squad/team within the organization
 - **Role Attributes**: Each team has `viewKeys` attribute scoped to their specific squad view
 - **Assignment**: Members inherit role attributes from team membership
-- **Examples**: Squad A team members automatically get `viewKeys = ["ii-squad-a"]`
+- **Examples**: Squad A team members automatically get `viewKeys = ["mb-oc-squad-a"]`
 
 ### Authorization Flow
 1. Members are assigned custom roles directly (defining their permission level)

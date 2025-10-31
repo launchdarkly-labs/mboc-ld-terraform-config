@@ -4,3 +4,48 @@
 launchdarkly_access_token = "your-launchdarkly-api-token-here"
 view_maintainer_id = "your-launchdarkly-member-id-here"
 team_maintainer_id = "your-launchdarkly-member-id-here"
+
+# Optional: Override the default Products, Projects, and Solutions
+# If not specified, the default values from variables.tf will be used
+# 
+# products = {
+#   alpha = {
+#     name = "Product Alpha"
+#   }
+#   beta = {
+#     name = "Product Beta"
+#   }
+#   gamma = {
+#     name = "Product Gamma"
+#   }
+# }
+#
+# projects = {
+#   project_a = {
+#     name       = "Project A"
+#     product_key = "alpha"
+#   }
+#   project_b = {
+#     name       = "Project B"
+#     product_key = "alpha"
+#   }
+#   project_c = {
+#     name       = "Project C"
+#     product_key = "beta"
+#   }
+# }
+#
+# solutions = {
+#   solution_1 = {
+#     name       = "Solution 1"
+#     project_key = "project_a"
+#   }
+#   solution_2 = {
+#     name       = "Solution 2"
+#     project_key = "project_a"
+#   }
+#   solution_3 = {
+#     name       = "Solution 3"
+#     project_key = "project_b"
+#   }
+# }

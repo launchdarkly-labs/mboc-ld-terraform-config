@@ -7,77 +7,66 @@ output "mb_oc_project" {
   }
 }
 
-# Note: Environments output removed as we're not using them in this configuration
-
 output "views" {
-  description = "Mercedes-Benz OC squad views"
+  description = "Views for the Mercedes-Benz OC (MB.OC) Project. Mapped to Solutions."
   value = {
-    squad_a = {
-      id   = launchdarkly_view.squad_a.id
-      key  = launchdarkly_view.squad_a.key
-      name = launchdarkly_view.squad_a.name
-    }
-    squad_b = {
-      id   = launchdarkly_view.squad_b.id
-      key  = launchdarkly_view.squad_b.key
-      name = launchdarkly_view.squad_b.name
-    }
-    squad_c = {
-      id   = launchdarkly_view.squad_c.id
-      key  = launchdarkly_view.squad_c.key
-      name = launchdarkly_view.squad_c.name
+    for solution_key, view in launchdarkly_view.solutions : solution_key => {
+      id   = view.id
+      key  = view.key
+      name = view.name
     }
   }
 }
 
 output "teams" {
-  description = "Mercedes-Benz OC squad teams"
+  description = "LD Teams for the Mercedes-Benz OC (MB.OC) Project. Organized by hierarchy (Solutions, Projects, Products)"
   value = {
-    squad_a = {
-      id   = launchdarkly_team.squad_a.id
-      key  = launchdarkly_team.squad_a.key
-      name = launchdarkly_team.squad_a.name
+    solutions = {
+      for solution_key, team in launchdarkly_team.solutions : solution_key => {
+        id   = team.id
+        key  = team.key
+        name = team.name
+      }
     }
-    squad_b = {
-      id   = launchdarkly_team.squad_b.id
-      key  = launchdarkly_team.squad_b.key
-      name = launchdarkly_team.squad_b.name
+    projects = {
+      for project_key, team in launchdarkly_team.projects : project_key => {
+        id   = team.id
+        key  = team.key
+        name = team.name
+      }
     }
-    squad_c = {
-      id   = launchdarkly_team.squad_c.id
-      key  = launchdarkly_team.squad_c.key
-      name = launchdarkly_team.squad_c.name
+    products = {
+      for product_key, team in launchdarkly_team.products : product_key => {
+        id   = team.id
+        key  = team.key
+        name = team.name
+      }
     }
   }
 }
 
 output "custom_roles" {
-  description = "Mercedes-Benz OC custom roles"
+  description = "LD Custom Roles for the Mercedes-Benz OC (MB.OC) Project"
   value = {
     mb_oc_ld_admins = {
       id   = launchdarkly_custom_role.mb_oc_ld_admins.id
       key  = launchdarkly_custom_role.mb_oc_ld_admins.key
       name = launchdarkly_custom_role.mb_oc_ld_admins.name
     }
-    mb_oc_lead_engineers = {
-      id   = launchdarkly_custom_role.mb_oc_lead_engineers.id
-      key  = launchdarkly_custom_role.mb_oc_lead_engineers.key
-      name = launchdarkly_custom_role.mb_oc_lead_engineers.name
-    }
     mb_oc_developers = {
       id   = launchdarkly_custom_role.mb_oc_developers.id
       key  = launchdarkly_custom_role.mb_oc_developers.key
       name = launchdarkly_custom_role.mb_oc_developers.name
     }
-    mb_oc_business_users = {
-      id   = launchdarkly_custom_role.mb_oc_business_users.id
-      key  = launchdarkly_custom_role.mb_oc_business_users.key
-      name = launchdarkly_custom_role.mb_oc_business_users.name
+    mb_oc_maintainers = {
+      id   = launchdarkly_custom_role.mb_oc_maintainers.id
+      key  = launchdarkly_custom_role.mb_oc_maintainers.key
+      name = launchdarkly_custom_role.mb_oc_maintainers.name
     }
-    mb_oc_qa_testers = {
-      id   = launchdarkly_custom_role.mb_oc_qa_testers.id
-      key  = launchdarkly_custom_role.mb_oc_qa_testers.key
-      name = launchdarkly_custom_role.mb_oc_qa_testers.name
+    mb_oc_devops = {
+      id   = launchdarkly_custom_role.mb_oc_devops.id
+      key  = launchdarkly_custom_role.mb_oc_devops.key
+      name = launchdarkly_custom_role.mb_oc_devops.name
     }
   }
 }

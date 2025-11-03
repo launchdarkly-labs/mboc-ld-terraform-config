@@ -18,6 +18,11 @@ data "launchdarkly_project" "mb_oc" {
   key = "mboc"
 }
 
+# Sandbox Project
+data "launchdarkly_project" "mb_oc_sandbox" {
+  key = "mboc-sandbox"
+}
+
 # Helper locals to compute hierarchy mappings and view keys for teams
 locals {
   # Map solution key -> project key
@@ -95,6 +100,7 @@ resource "launchdarkly_team" "solutions" {
   description = "Team for ${each.value.name} members with access to ${each.value.name} feature flags"
   maintainers = [var.team_maintainer_id]
   member_ids  = []
+  custom_role_keys = [launchdarkly_custom_role.mb_oc_sandbox.key]
 
   role_attributes {
     key    = "viewKeys"
@@ -115,6 +121,7 @@ resource "launchdarkly_team" "projects" {
   description = "Team for ${each.value.name} members with access to all solution views in ${each.value.name}"
   maintainers = [var.team_maintainer_id]
   member_ids  = []
+  custom_role_keys = [launchdarkly_custom_role.mb_oc_sandbox.key]
 
   role_attributes {
     key    = "viewKeys"
@@ -135,6 +142,7 @@ resource "launchdarkly_team" "products" {
   description = "Team for ${each.value.name} members with access to all solution views in ${each.value.name}"
   maintainers = [var.team_maintainer_id]
   member_ids  = []
+  custom_role_keys = [launchdarkly_custom_role.mb_oc_sandbox.key]
 
   role_attributes {
     key    = "viewKeys"
@@ -476,5 +484,125 @@ resource "launchdarkly_custom_role" "mb_oc_devops" {
     effect    = "allow"
     actions   = ["viewSdkKey"]
     resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*;{critical:true}"]
+  }
+}
+
+# Sandbox Role: full access to all project-scoped resources within the sandbox project
+resource "launchdarkly_custom_role" "mb_oc_sandbox" {
+  key              = "mb-oc-sandbox"
+  name             = "MB OC: Sandbox"
+  description      = "Full access to all project-scoped resources within the sandbox project"
+  base_permissions = "no_access"
+
+  # View and manage project
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}"]
+  }
+
+  # All actions on environments
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:env/*"]
+  }
+
+  # All actions on AI configs
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:env/*:aiconfig/*"]
+  }
+
+  # All actions on context kinds
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:context-kind/*"]
+  }
+
+  # All actions on data export destinations
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:env/*:destination/*"]
+  }
+
+  # All actions on experiments
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:env/*:experiment/*"]
+  }
+
+  # All actions on flags
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:env/*:flag/*"]
+  }
+
+  # All actions on holdouts
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:env/*:holdout/*"]
+  }
+
+  # All actions on segments
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:env/*:segment/*"]
+  }
+
+  # All actions on layers
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:layer/*"]
+  }
+
+  # All actions on metrics
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:metric/*"]
+  }
+
+  # All actions on metric groups
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:metric-group/*"]
+  }
+
+  # All actions on product analytics dashboards
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:env/*:product-analytics-dashboard/*"]
+  }
+
+  # All actions on release pipelines
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:release-pipeline/*"]
+  }
+
+  # All actions on views
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:view/*"]
+  }
+
+  # All actions on AI tools
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc_sandbox.key}:ai-tool/*"]
   }
 }

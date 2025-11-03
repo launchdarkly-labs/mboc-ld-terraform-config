@@ -51,6 +51,10 @@ variable "projects" {
       name        = "Project C"
       product_key = "beta"
     }
+    project_d = {
+      name        = "Project D"
+      product_key = "gamma"
+    }
   }
 }
 
@@ -72,6 +76,14 @@ variable "solutions" {
     solution_3 = {
       name        = "Solution 3"
       project_key = "project_b"
+    }
+    solution_4 = {
+      name        = "Solution 4"
+      project_key = "project_c"
+    }
+    solution_5 = {
+      name        = "Solution 5"
+      project_key = "project_d"
     }
   }
 }

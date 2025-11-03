@@ -146,7 +146,7 @@ resource "launchdarkly_team" "products" {
   }
 }
 # Custom Roles
-# LD Admins Role - full access to LaunchDarkly (mimics built-in admin role)
+# LD Admins Role: full access to LaunchDarkly (mimics built-in admin role)
 resource "launchdarkly_custom_role" "mb_oc_ld_admins" {
   key              = "mb-oc-ld-admins"
   name             = "MB OC: LD Admins"
@@ -329,7 +329,7 @@ resource "launchdarkly_custom_role" "mb_oc_ld_admins" {
 }
 
 
-# Developers Role - scoped to specific view(s), can only modify flags in non-critical environments
+# Developers Role: scoped to specific views, can create/update/archive/delete flags, make/review/apply changes in both critical and non-critical environments. Can manage release pipelines,segments, metrics, and metric groups. can view SDK keys for non-critical environments.
 resource "launchdarkly_custom_role" "mb_oc_developers" {
   key              = "mb-oc-developers"
   name             = "MB OC: Developers"
@@ -343,6 +343,13 @@ resource "launchdarkly_custom_role" "mb_oc_developers" {
     resources = ["proj/${data.launchdarkly_project.mb_oc.key}"]
   }
 
+  # Vies SDK keys for non-critical environments
+  policy_statements {
+    effect    = "allow"
+    actions   = ["viewSdkKey"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*;{critical:false}"]
+  }
+
   # View and manage views
   policy_statements {
     effect    = "allow"
@@ -350,27 +357,35 @@ resource "launchdarkly_custom_role" "mb_oc_developers" {
     resources = ["proj/${data.launchdarkly_project.mb_oc.key}:view/$${roleAttribute/viewKeys}"]
   }
 
-  # Flag actions in non-critical environments only, scoped to views
+  # Allow access to product analytics dashboards
   policy_statements {
     effect    = "allow"
     actions   = ["*"]
-    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*;{critical:false}:flag/*;view:$${roleAttribute/viewKeys}"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*:product-analytics-dashboard/*"]
   }
 
-  # Only allow flag actions that don't impact flag evaluations in critical environments
+  # Flag actions, scoped to views
   policy_statements {
     effect    = "allow"
-    actions   = ["createFlag", "addReleasePipeline", "removeReleasePipeline", "replaceReleasePipeline", "updateDescription", "updateDeprecated", "updateFlagCustomProperties", "updateFlagDefaultVariations", "updateFlagVariations", "updateGlobalArchived", "updateIncludeInSnippet", "updateName", "updateTags", "updateTemporary"]
+    actions   = ["*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*:flag/*;view:$${roleAttribute/viewKeys}"]
+  }
+
+  # Deny bypassing required approval in critical environments
+  policy_statements {
+    effect    = "deny"
+    actions   = ["bypassRequiredApproval"]
     resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*;{critical:true}:flag/*;view:$${roleAttribute/viewKeys}"]
   }
 
-  # All segment actions in non-critical environments
+  # All segment actions in all environments, scoped to views
   policy_statements {
     effect    = "allow"
     actions   = ["*"]
-    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*;{critical:false}:segment/*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*:segment/*"]
   }
 
+  # All actions on metrics
   policy_statements {
     effect    = "allow"
     actions   = ["*"]
@@ -384,22 +399,29 @@ resource "launchdarkly_custom_role" "mb_oc_developers" {
     resources = ["proj/${data.launchdarkly_project.mb_oc.key}:metric-group/*"]
   }
 
-  # All actions on experiments in non-critical environments
+  # All actions on release pipelines
   policy_statements {
     effect    = "allow"
     actions   = ["*"]
-    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*;{critical:false}:experiment/*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:release-pipeline/*"]
   }
 
-  # All actions on experiment holdouts in non-critical environments
+  # All actions on product analytics dashboards
   policy_statements {
     effect    = "allow"
     actions   = ["*"]
-    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*;{critical:false}:holdout/*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*:product-analytics-dashboard/*"]
+  }
+
+  # Allow the creation of personal access tokens
+  policy_statements {
+    effect    = "allow"
+    actions   = ["*"]
+    resources = ["member/*:token/*"]
   }
 }
 
-# Maintainers Role - read-only access to flags, can manage experimentation resources
+# Maintainers Role: scoped to specific views. Can update flag metadata, can request & apply changes in critical environments.
 resource "launchdarkly_custom_role" "mb_oc_maintainers" {
   key              = "mb-oc-maintainers"
   name             = "MB OC: Maintainers"
@@ -416,43 +438,29 @@ resource "launchdarkly_custom_role" "mb_oc_maintainers" {
   # View views
   policy_statements {
     effect    = "allow"
-    actions   = ["viewView"]
+    actions   = ["viewView", "linkFlagToView", "unlinkFlagFromView"]
     resources = ["proj/${data.launchdarkly_project.mb_oc.key}:view/$${roleAttribute/viewKeys}"]
   }
 
-  # All actions on experiments (both critical and non-critical environments)
+  # Allow all actions on flags, across all environments in the MBOC project, scoped to views
   policy_statements {
     effect    = "allow"
     actions   = ["*"]
-    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*:experiment/*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*:flag/*;view:$${roleAttribute/viewKeys}"]
   }
 
-  # All actions on experiment holdouts (both critical and non-critical environments)
+  # Deny creating, archiving, deleting, cloning flags. Deny reviewing change approval requests or bypassing required approval. Scoped to views. For project-scoped actions, denying an action in critical environments will prevent the action across all environments.
   policy_statements {
-    effect    = "allow"
-    actions   = ["*"]
-    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*:holdout/*"]
+    effect    = "deny"
+    actions   = ["createFlag", "updateGlobalArchived", "deleteFlag", "cloneFlag", "updateClientSideFlagAvailability", "reviewApprovalRequest", "bypassRequiredApproval"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*;{critical:true}:flag/*;view:$${roleAttribute/viewKeys}"]
   }
 
-  # All actions on experiment layers
+  # All actions on product analytics dashboards
   policy_statements {
     effect    = "allow"
     actions   = ["*"]
-    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:layer/*"]
-  }
-
-  # All actions on metrics
-  policy_statements {
-    effect    = "allow"
-    actions   = ["*"]
-    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:metric/*"]
-  }
-
-  # All actions on metric groups
-  policy_statements {
-    effect    = "allow"
-    actions   = ["*"]
-    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:metric-group/*"]
+    resources = ["proj/${data.launchdarkly_project.mb_oc.key}:env/*:product-analytics-dashboard/*"]
   }
 }
 

@@ -1,52 +1,61 @@
 # LaunchDarkly Terraform Management - MB OC
 
-Terraform configuration for managing LaunchDarkly resources for MB OC using an existing project.
+Terraform configuration for managing LaunchDarkly resources with a hierarchical organization model (Products → Projects → Solutions) and role-based access control.
 
-## Project Structure
+## Overview
 
-- **Project**: Uses existing LaunchDarkly project (`default`)
-- **Views**: MB OC: Squad A (`mb-oc-squad-a`), MB OC: Squad B (`mb-oc-squad-b`), MB OC: Squad C (`mb-oc-squad-c`)
-- **Teams**: MB OC: Squad A, MB OC: Squad B, MB OC: Squad C
-- **Custom Roles**: LD Admins, Lead Engineers, Engineers, Business, QA Testers
+This configuration manages LaunchDarkly resources across two projects:
+- **mboc**: Production project with view-scoped access control
+- **mboc-sandbox**: Sandbox project with full access for all teams
 
-## Design Logic
+## Architecture
 
-This configuration implements a two-tier authorization model:
+### Organizational Hierarchy
 
-### Custom Roles (Persona-based)
-- **Purpose**: Define different permission levels based on job functions
-- **Role Attributes**: Reference Views using `$${roleAttribute/viewKeys}` in policy statements
-- **Assignment**: Assigned directly to LD Members without specifying role attributes at assignment time
-- **Examples**: LD Admins (full access), Lead Engineers (can manage non-critical + request changes in critical), Developers (non-critical only), Business Users (read-only + experiments), QA Testers (testing permissions)
+The configuration uses a three-tier hierarchy:
+- **Products** → **Projects** → **Solutions**
+- Each Solution maps to a View in LaunchDarkly
+- Teams exist at Solution, Project, and Product levels, inheriting access to their respective Views
 
-### Teams (Squad-based)
-- **Purpose**: Organize members by squad/team within the organization
-- **Role Attributes**: Each team has `viewKeys` attribute scoped to their specific squad view
-- **Assignment**: Members inherit role attributes from team membership
-- **Examples**: Squad A team members automatically get `viewKeys = ["mb-oc-squad-a"]`
+### Resources Created
 
-### Authorization Flow
-1. Members are assigned custom roles directly (defining their permission level)
-2. Members are added to teams (inheriting squad-specific View access)
-3. When accessing LaunchDarkly, members' effective permissions are the intersection of their custom role permissions AND their team's view scope
-4. This allows different personas (roles) within the same squad to have different permission levels while maintaining squad-based access boundaries
-5. Additionally, if in the future you decide to implement mapping between LD Custom Roles/Teams and IdP Security Groups, this approach allows reducing the number of the security groups that would need to be created
+1. **Views**: One per Solution, scoped to the `mboc` project
+2. **Teams**: 
+   - Solution Teams: Access to their own Solution's View
+   - Project Teams: Access to all Solution Views within their Project
+   - Product Teams: Access to all Solution Views within their Product
+   - All teams are assigned the `mb_oc_sandbox` role (full sandbox access)
+3. **Custom Roles**:
+   - **LD Admins**: Full administrative access to all LaunchDarkly resources
+   - **Developers**: View-scoped flag management in non-critical environments
+   - **Maintainers**: View-scoped flag management with restricted actions in critical environments
+   - **DevOps**: View SDK keys for critical environments (supplementary role)
+   - **Sandbox**: Full access to all project-scoped resources in the sandbox project
 
-## Files
+### Authorization Model
 
-- `main.tf` - Main configuration
-- `variables.tf` - Variable definitions  
-- `outputs.tf` - Output definitions
-- `terraform.tfvars.example` - Example variables
+This configuration uses a two-tier authorization model:
+
+1. **Custom Roles** (assigned to members): Define permission levels based on job functions
+   - Permissions are scoped using `$${roleAttribute/viewKeys}` in policy statements
+   - Role attributes are provided via team membership
+
+2. **Teams** (assign members): Provide view scope via role attributes
+   - Each team defines `viewKeys` that limit access to specific Views
+   - Members inherit these role attributes when added to teams
+   - Effective permissions = Custom Role permissions ∩ Team's view scope
 
 ## Setup
 
-1. Copy the example file:
+1. Copy the example variables file:
    ```bash
    cp terraform.tfvars.example terraform.tfvars
    ```
 
-2. Edit `terraform.tfvars` with your LaunchDarkly API token and team maintainer ID
+2. Configure `terraform.tfvars`:
+   - Set `launchdarkly_access_token` (your LaunchDarkly API token)
+   - Set `view_maintainer_id` and `team_maintainer_id` (LaunchDarkly member IDs)
+   - Optionally override `products`, `projects`, and `solutions` to match your organization
 
 3. Initialize and apply:
    ```bash
@@ -55,9 +64,8 @@ This configuration implements a two-tier authorization model:
    terraform apply
    ```
 
-## Configuration
+## Customization
 
-This configuration uses an existing LaunchDarkly project (`default`) and creates:
-- **Views**: Three squad-specific views for organizing feature flags
-- **Teams**: Three teams with squad-specific role attributes
-- **Custom Roles**: Five custom roles with different permission levels for various team members
+Edit `terraform.tfvars` to define your organizational hierarchy. The default structure includes example Products, Projects, and Solutions that can be replaced with your actual structure.
+
+Member management: Teams are created with empty `member_ids`. Add members through the LaunchDarkly UI or API. The configuration uses `ignore_changes` on `member_ids` to prevent Terraform from managing membership directly.

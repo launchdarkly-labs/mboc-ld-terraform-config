@@ -8,9 +8,9 @@ output "mb_oc_project" {
 }
 
 output "views" {
-  description = "Views for the Mercedes-Benz OC (MB.OC) Project. Mapped to Solutions."
+  description = "Views for the Mercedes-Benz OC (MB.OC) Project. Mapped to Products."
   value = {
-    for solution_key, view in launchdarkly_view.solutions : solution_key => {
+    for product_key, view in launchdarkly_view.products : product_key => {
       id   = view.id
       key  = view.key
       name = view.name
@@ -19,14 +19,12 @@ output "views" {
 }
 
 output "teams" {
-  description = "LD Teams for the Mercedes-Benz OC (MB.OC) Project. Organized by hierarchy (Solutions, Projects, Products)"
+  description = "LD Teams for the Mercedes-Benz OC (MB.OC) Project. Organized by hierarchy (Solution, Projects, Products)"
   value = {
-    solutions = {
-      for solution_key, team in launchdarkly_team.solutions : solution_key => {
-        id   = team.id
-        key  = team.key
-        name = team.name
-      }
+    solution = {
+      id   = launchdarkly_team.solution.id
+      key  = launchdarkly_team.solution.key
+      name = launchdarkly_team.solution.name
     }
     projects = {
       for project_key, team in launchdarkly_team.projects : project_key => {
@@ -63,10 +61,10 @@ output "custom_roles" {
       key  = launchdarkly_custom_role.mb_oc_maintainers.key
       name = launchdarkly_custom_role.mb_oc_maintainers.name
     }
-    mb_oc_devops = {
-      id   = launchdarkly_custom_role.mb_oc_devops.id
-      key  = launchdarkly_custom_role.mb_oc_devops.key
-      name = launchdarkly_custom_role.mb_oc_devops.name
+    mb_oc_secrets_managers = {
+      id   = launchdarkly_custom_role.mb_oc_secrets_managers.id
+      key  = launchdarkly_custom_role.mb_oc_secrets_managers.key
+      name = launchdarkly_custom_role.mb_oc_secrets_managers.name
     }
   }
 }

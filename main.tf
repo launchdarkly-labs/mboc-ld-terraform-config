@@ -25,86 +25,68 @@ data "launchdarkly_project" "mb_oc_sandbox" {
 
 # Helper locals to compute hierarchy mappings and view keys for teams
 locals {
-  # Map solution key -> project key
-  solution_to_project = {
-    for solution_key, solution in var.solutions : solution_key => solution.project_key
-  }
+  # Solution is fixed: MB.OC (there is exactly one Solution)
+  solution_key = "mb-oc"
+  solution_name = "MB.OC"
 
-  # Map project key -> product key
-  project_to_product = {
-    for project_key, project in var.projects : project_key => project.product_key
-  }
-
-  # Map project key -> list of solution keys
-  project_to_solutions = {
+  # Map project key -> list of product keys
+  project_to_products = {
     for project_key in keys(var.projects) : project_key => [
-      for solution_key, solution in var.solutions : solution_key
-      if solution.project_key == project_key
+      for product_key, product in var.products : product_key
+      if product.project_key == project_key
     ]
   }
 
-  # Map product key -> list of solution keys (all solutions under all projects in the product)
-  product_to_solutions = {
-    for product_key in keys(var.products) : product_key => flatten([
-      for project_key, solution_keys in local.project_to_solutions : solution_keys
-      if local.project_to_product[project_key] == product_key
-    ])
+  # View key for each product (will be used in views and teams)
+  product_view_keys = {
+    for product_key in keys(var.products) : product_key => "mb-oc-${product_key}"
   }
 
-  # View key for each solution (will be used in views and teams)
-  solution_view_keys = {
-    for solution_key in keys(var.solutions) : solution_key => "mb-oc-${solution_key}"
-  }
-
-  # View keys for each solution team (just their own view)
-  solution_team_view_keys = {
-    for solution_key in keys(var.solutions) : solution_key => [
-      local.solution_view_keys[solution_key]
-    ]
-  }
-
-  # View keys for each project team (all solution views in that project)
-  project_team_view_keys = {
-    for project_key in keys(var.projects) : project_key => [
-      for solution_key in local.project_to_solutions[project_key] : local.solution_view_keys[solution_key]
-    ]
-  }
-
-  # View keys for each product team (all solution views in all projects under that product)
+  # View keys for each product team (just their own view)
   product_team_view_keys = {
     for product_key in keys(var.products) : product_key => [
-      for solution_key in local.product_to_solutions[product_key] : local.solution_view_keys[solution_key]
+      local.product_view_keys[product_key]
     ]
   }
+
+  # View keys for each project team (all product views in that project)
+  project_team_view_keys = {
+    for project_key in keys(var.projects) : project_key => [
+      for product_key in local.project_to_products[project_key] : local.product_view_keys[product_key]
+    ]
+  }
+
+  # View keys for the solution team (all product views across all projects)
+  solution_team_view_keys = [
+    for product_key in keys(var.products) : local.product_view_keys[product_key]
+  ]
 }
 
-# Views - mapped to Solutions for managing access to feature flags
-resource "launchdarkly_view" "solutions" {
-  for_each = var.solutions
+# Views - mapped to Products for managing access to feature flags
+resource "launchdarkly_view" "products" {
+  for_each = var.products
 
-  key               = local.solution_view_keys[each.key]
+  key               = local.product_view_keys[each.key]
   name              = "MB OC: ${each.value.name}"
   project_key       = data.launchdarkly_project.mb_oc.key
   description       = "View for ${each.value.name}'s feature flags"
   maintainer_id     = var.view_maintainer_id
   generate_sdk_keys = true
-  tags              = [each.key, "mb-oc", "solution"]
+  tags              = [each.key, "mb-oc", "product"]
 }
 
-# Teams - Solution Teams
-resource "launchdarkly_team" "solutions" {
-  for_each = var.solutions
-
-  key         = "mb-oc-${each.key}"
-  name        = "MB OC: ${each.value.name}"
-  description = "Team for ${each.value.name} members with access to ${each.value.name} feature flags"
+# Teams - Solution Team (MB.OC)
+resource "launchdarkly_team" "solution" {
+  key         = "mb-oc-${local.solution_key}"
+  name        = "MB OC: ${local.solution_name}"
+  description = "Team for ${local.solution_name} members with access to all product views across all projects"
   maintainers = [var.team_maintainer_id]
   member_ids  = []
   custom_role_keys = [launchdarkly_custom_role.mb_oc_sandbox.key]
 
   role_attributes {
     key    = "viewKeys"
-    values = local.solution_team_view_keys[each.key]
+    values = local.solution_team_view_keys
   }
 
   lifecycle {
@@ -118,7 +100,7 @@ resource "launchdarkly_team" "projects" {
 
   key         = "mb-oc-${each.key}"
   name        = "MB OC: ${each.value.name}"
-  description = "Team for ${each.value.name} members with access to all solution views in ${each.value.name}"
+  description = "Team for ${each.value.name} members with access to all product views in ${each.value.name}"
   maintainers = [var.team_maintainer_id]
   member_ids  = []
   custom_role_keys = [launchdarkly_custom_role.mb_oc_sandbox.key]
@@ -139,7 +121,7 @@ resource "launchdarkly_team" "products" {
 
   key         = "mb-oc-${each.key}"
   name        = "MB OC: ${each.value.name}"
-  description = "Team for ${each.value.name} members with access to all solution views in ${each.value.name}"
+  description = "Team for ${each.value.name} members with access to ${each.value.name} feature flags"
   maintainers = [var.team_maintainer_id]
   member_ids  = []
   custom_role_keys = [launchdarkly_custom_role.mb_oc_sandbox.key]
@@ -472,11 +454,11 @@ resource "launchdarkly_custom_role" "mb_oc_maintainers" {
   }
 }
 
-# DevOps Role - view SDK keys for critical environments only (supplementary role to be used with Developer or Maintainer roles)
-resource "launchdarkly_custom_role" "mb_oc_devops" {
-  key              = "mb-oc-devops"
-  name             = "MB OC: DevOps"
-  description      = "Can view SDK keys for critical environments only. This is a supplementary role meant to be used in combination with Developer or Maintainer roles."
+# Secrets Managers Role - view SDK keys for critical environments only (supplementary role to be used with Developer or Maintainer roles)
+resource "launchdarkly_custom_role" "mb_oc_secrets_managers" {
+  key              = "mb-oc-secrets-managers"
+  name             = "MB OC: Secrets Managers"
+  description      = "Can view secrets for critical environments only. This is a supplementary role meant to be used in combination with Developer or Maintainer roles."
   base_permissions = "no_access"
 
   # View SDK keys for critical environments only

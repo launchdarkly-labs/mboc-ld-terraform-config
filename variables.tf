@@ -14,75 +14,52 @@ variable "team_maintainer_id" {
   type        = string
 }
 
-variable "products" {
-  description = "Map of products in the organizational hierarchy"
+variable "projects" {
+  description = "Map of projects in the organizational hierarchy, contained within the MB.OC Solution"
   type = map(object({
     name = string
   }))
   default = {
-    alpha = {
-      name = "Product Alpha"
-    }
-    beta = {
-      name = "Product Beta"
-    }
-    gamma = {
-      name = "Product Gamma"
-    }
-  }
-}
-
-variable "projects" {
-  description = "Map of projects in the organizational hierarchy, each referencing a product"
-  type = map(object({
-    name        = string
-    product_key = string
-  }))
-  default = {
     project_a = {
-      name        = "Project A"
-      product_key = "alpha"
+      name = "Project A"
     }
     project_b = {
-      name        = "Project B"
-      product_key = "alpha"
+      name = "Project B"
     }
     project_c = {
-      name        = "Project C"
-      product_key = "beta"
+      name = "Project C"
     }
     project_d = {
-      name        = "Project D"
-      product_key = "gamma"
+      name = "Project D"
     }
   }
 }
 
-variable "solutions" {
-  description = "Map of solutions in the organizational hierarchy, each referencing a project"
+variable "products" {
+  description = "Map of products in the organizational hierarchy, each referencing a project"
   type = map(object({
     name        = string
     project_key = string
   }))
   default = {
-    solution_1 = {
-      name        = "Solution 1"
+    alpha = {
+      name        = "Product Alpha"
       project_key = "project_a"
     }
-    solution_2 = {
-      name        = "Solution 2"
+    beta = {
+      name        = "Product Beta"
       project_key = "project_a"
     }
-    solution_3 = {
-      name        = "Solution 3"
+    gamma = {
+      name        = "Product Gamma"
       project_key = "project_b"
     }
-    solution_4 = {
-      name        = "Solution 4"
+    delta = {
+      name        = "Product Delta"
       project_key = "project_c"
     }
-    solution_5 = {
-      name        = "Solution 5"
+    epsilon = {
+      name        = "Product Epsilon"
       project_key = "project_d"
     }
   }

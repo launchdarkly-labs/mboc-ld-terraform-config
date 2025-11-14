@@ -77,7 +77,7 @@ resource "launchdarkly_view" "products" {
 
 # Teams - Solution Team (MB.OC)
 resource "launchdarkly_team" "solution" {
-  key         = "mb-oc-${local.solution_key}"
+  key         = "mboc-${local.solution_key}"
   name        = "MB OC: ${local.solution_name}"
   description = "Team for ${local.solution_name} members with access to all product views across all projects"
   maintainers = [var.team_maintainer_id]
@@ -98,7 +98,7 @@ resource "launchdarkly_team" "solution" {
 resource "launchdarkly_team" "projects" {
   for_each = var.projects
 
-  key         = "mb-oc-${each.key}"
+  key         = "mboc-${each.key}"
   name        = "MB OC: ${each.value.name}"
   description = "Team for ${each.value.name} members with access to all product views in ${each.value.name}"
   maintainers = [var.team_maintainer_id]
@@ -119,7 +119,7 @@ resource "launchdarkly_team" "projects" {
 resource "launchdarkly_team" "products" {
   for_each = var.products
 
-  key         = "mb-oc-${each.key}"
+  key         = "mboc-${each.key}"
   name        = "MB OC: ${each.value.name}"
   description = "Team for ${each.value.name} members with access to ${each.value.name} feature flags"
   maintainers = [var.team_maintainer_id]

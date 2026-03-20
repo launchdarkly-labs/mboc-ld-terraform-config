@@ -5,47 +5,35 @@ launchdarkly_access_token = "your-launchdarkly-api-token-here"
 view_maintainer_id = "your-launchdarkly-member-id-here"
 team_maintainer_id = "your-launchdarkly-member-id-here"
 
-# Optional: Override the default Products, Projects, and Solutions
-# If not specified, the default values from variables.tf will be used
-# 
-# products = {
-#   alpha = {
-#     name = "Product Alpha"
-#   }
-#   beta = {
-#     name = "Product Beta"
-#   }
-#   gamma = {
-#     name = "Product Gamma"
-#   }
-# }
+# Optional: Override the placeholder Projects and Products from variables.tf.
+# If not specified, the default placeholder values will be used.
+# See README.md for full details.
+#
+# Set managed = false on a project to exclude it (and all its products) from
+# Terraform. This is useful when those resources are managed via the LD UI and
+# you want to avoid conflicts.
 #
 # projects = {
-#   project_a = {
-#     name       = "Project A"
-#     product_key = "alpha"
+#   payments = {
+#     name = "Payments Platform"
 #   }
-#   project_b = {
-#     name       = "Project B"
-#     product_key = "alpha"
-#   }
-#   project_c = {
-#     name       = "Project C"
-#     product_key = "beta"
+#   checkout = {
+#     name    = "Checkout Experience"
+#     managed = false  # managed via UI, excluded from Terraform
 #   }
 # }
 #
-# solutions = {
-#   solution_1 = {
-#     name       = "Solution 1"
-#     project_key = "project_a"
+# products = {
+#   payments_api = {
+#     name        = "Payments API"
+#     project_key = "payments"
 #   }
-#   solution_2 = {
-#     name       = "Solution 2"
-#     project_key = "project_a"
+#   fraud_detection = {
+#     name        = "Fraud Detection"
+#     project_key = "payments"
 #   }
-#   solution_3 = {
-#     name       = "Solution 3"
-#     project_key = "project_b"
+#   cart = {
+#     name        = "Shopping Cart"
+#     project_key = "checkout"  # automatically excluded because checkout is unmanaged
 #   }
 # }

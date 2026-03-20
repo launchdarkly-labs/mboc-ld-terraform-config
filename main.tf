@@ -26,45 +26,53 @@ data "launchdarkly_project" "mb_oc_sandbox" {
 # Helper locals to compute hierarchy mappings and view keys for teams
 locals {
   # Solution is fixed: MB.OC (there is exactly one Solution)
-  solution_key = "mb-oc"
+  solution_key  = "mb-oc"
   solution_name = "MB.OC"
+
+  # Filter to only Terraform-managed projects and their products
+  managed_projects = {
+    for k, v in var.projects : k => v if v.managed
+  }
+  managed_products = {
+    for k, v in var.products : k => v if var.projects[v.project_key].managed
+  }
 
   # Map project key -> list of product keys
   project_to_products = {
-    for project_key in keys(var.projects) : project_key => [
-      for product_key, product in var.products : product_key
+    for project_key in keys(local.managed_projects) : project_key => [
+      for product_key, product in local.managed_products : product_key
       if product.project_key == project_key
     ]
   }
 
   # View key for each product (will be used in views and teams)
   product_view_keys = {
-    for product_key in keys(var.products) : product_key => "mb-oc-${product_key}"
+    for product_key in keys(local.managed_products) : product_key => "mb-oc-${product_key}"
   }
 
   # View keys for each product team (just their own view)
   product_team_view_keys = {
-    for product_key in keys(var.products) : product_key => [
+    for product_key in keys(local.managed_products) : product_key => [
       local.product_view_keys[product_key]
     ]
   }
 
   # View keys for each project team (all product views in that project)
   project_team_view_keys = {
-    for project_key in keys(var.projects) : project_key => [
+    for project_key in keys(local.managed_projects) : project_key => [
       for product_key in local.project_to_products[project_key] : local.product_view_keys[product_key]
     ]
   }
 
   # View keys for the solution team (all product views across all projects)
   solution_team_view_keys = [
-    for product_key in keys(var.products) : local.product_view_keys[product_key]
+    for product_key in keys(local.managed_products) : local.product_view_keys[product_key]
   ]
 }
 
 # Views - mapped to Products for managing access to feature flags
 resource "launchdarkly_view" "products" {
-  for_each = var.products
+  for_each = local.managed_products
 
   key               = local.product_view_keys[each.key]
   name              = "MB OC: ${each.value.name}"
@@ -77,11 +85,11 @@ resource "launchdarkly_view" "products" {
 
 # Teams - Solution Team (MB.OC)
 resource "launchdarkly_team" "solution" {
-  key         = "mboc-${local.solution_key}"
-  name        = "MB OC: ${local.solution_name}"
-  description = "Team for ${local.solution_name} members with access to all product views across all projects"
-  maintainers = [var.team_maintainer_id]
-  member_ids  = []
+  key              = "mboc-${local.solution_key}"
+  name             = "MB OC: ${local.solution_name}"
+  description      = "Team for ${local.solution_name} members with access to all product views across all projects"
+  maintainers      = [var.team_maintainer_id]
+  member_ids       = []
   custom_role_keys = [launchdarkly_custom_role.mb_oc_sandbox.key]
 
   role_attributes {
@@ -96,13 +104,13 @@ resource "launchdarkly_team" "solution" {
 
 # Teams - Project Teams
 resource "launchdarkly_team" "projects" {
-  for_each = var.projects
+  for_each = local.managed_projects
 
-  key         = "mboc-${each.key}"
-  name        = "MB OC: ${each.value.name}"
-  description = "Team for ${each.value.name} members with access to all product views in ${each.value.name}"
-  maintainers = [var.team_maintainer_id]
-  member_ids  = []
+  key              = "mboc-${each.key}"
+  name             = "MB OC: ${each.value.name}"
+  description      = "Team for ${each.value.name} members with access to all product views in ${each.value.name}"
+  maintainers      = [var.team_maintainer_id]
+  member_ids       = []
   custom_role_keys = [launchdarkly_custom_role.mb_oc_sandbox.key]
 
   role_attributes {
@@ -117,13 +125,13 @@ resource "launchdarkly_team" "projects" {
 
 # Teams - Product Teams
 resource "launchdarkly_team" "products" {
-  for_each = var.products
+  for_each = local.managed_products
 
-  key         = "mboc-${each.key}"
-  name        = "MB OC: ${each.value.name}"
-  description = "Team for ${each.value.name} members with access to ${each.value.name} feature flags"
-  maintainers = [var.team_maintainer_id]
-  member_ids  = []
+  key              = "mboc-${each.key}"
+  name             = "MB OC: ${each.value.name}"
+  description      = "Team for ${each.value.name} members with access to ${each.value.name} feature flags"
+  maintainers      = [var.team_maintainer_id]
+  member_ids       = []
   custom_role_keys = [launchdarkly_custom_role.mb_oc_sandbox.key]
 
   role_attributes {

@@ -14,10 +14,15 @@ variable "team_maintainer_id" {
   type        = string
 }
 
+# IMPORTANT: The projects and products below are PLACEHOLDERS for demonstration only.
+# Override them in terraform.tfvars with your actual organizational structure.
+# See README.md for examples and guidance.
+
 variable "projects" {
-  description = "Map of projects in the organizational hierarchy, contained within the MB.OC Solution"
+  description = "Map of projects in the organizational hierarchy. Set managed = false to exclude a project (and all its products) from Terraform, useful when those resources are managed via the UI."
   type = map(object({
-    name = string
+    name    = string
+    managed = optional(bool, true)
   }))
   default = {
     project_a = {
@@ -36,7 +41,7 @@ variable "projects" {
 }
 
 variable "products" {
-  description = "Map of products in the organizational hierarchy, each referencing a project"
+  description = "Map of products in the organizational hierarchy, each referencing a project. Products whose parent project has managed = false are automatically excluded."
   type = map(object({
     name        = string
     project_key = string

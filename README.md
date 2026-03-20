@@ -66,8 +66,162 @@ This configuration uses a two-tier authorization model:
    terraform apply
    ```
 
+## Syncing State for a New Operator
+
+This project uses **local Terraform state** (no remote backend is configured). If someone has already applied this configuration and you don't have their `terraform.tfstate` file, running `terraform plan` will show all resources as needing to be created — even though they already exist in LaunchDarkly. Applying in that state will fail with naming/key conflicts.
+
+To sync your local state with the existing resources, run `terraform import` for each resource. The commands below assume the **default** `projects` and `products` variable values. If they have been customized in `terraform.tfvars`, adjust accordingly.
+
+```bash
+terraform init
+
+# Custom Roles
+terraform import launchdarkly_custom_role.mb_oc_ld_admins mb-oc-ld-admins
+terraform import launchdarkly_custom_role.mb_oc_developers mb-oc-developers
+terraform import launchdarkly_custom_role.mb_oc_maintainers mb-oc-maintainers
+terraform import launchdarkly_custom_role.mb_oc_secrets_managers mb-oc-secrets-managers
+terraform import launchdarkly_custom_role.mb_oc_sandbox mb-oc-sandbox
+
+# Solution Team
+terraform import launchdarkly_team.solution mboc-mb-oc
+
+# Project Teams
+terraform import 'launchdarkly_team.projects["project_a"]' mboc-project_a
+terraform import 'launchdarkly_team.projects["project_b"]' mboc-project_b
+terraform import 'launchdarkly_team.projects["project_c"]' mboc-project_c
+terraform import 'launchdarkly_team.projects["project_d"]' mboc-project_d
+
+# Product Teams
+terraform import 'launchdarkly_team.products["alpha"]' mboc-alpha
+terraform import 'launchdarkly_team.products["beta"]' mboc-beta
+terraform import 'launchdarkly_team.products["gamma"]' mboc-gamma
+terraform import 'launchdarkly_team.products["delta"]' mboc-delta
+terraform import 'launchdarkly_team.products["epsilon"]' mboc-epsilon
+
+# Views (import format: project_key/view_key)
+terraform import 'launchdarkly_view.products["alpha"]' mboc/mb-oc-alpha
+terraform import 'launchdarkly_view.products["beta"]' mboc/mb-oc-beta
+terraform import 'launchdarkly_view.products["gamma"]' mboc/mb-oc-gamma
+terraform import 'launchdarkly_view.products["delta"]' mboc/mb-oc-delta
+terraform import 'launchdarkly_view.products["epsilon"]' mboc/mb-oc-epsilon
+```
+
+After importing, run `terraform plan` to verify the state matches — it should show no changes (or only minor diffs due to attribute defaults).
+
+> **Tip:** To avoid this problem entirely, consider adding a [remote backend](https://developer.hashicorp.com/terraform/language/backend) (e.g. Terraform Cloud, S3+DynamoDB) so state is shared automatically.
+
+## Default Projects and Products (Placeholders)
+
+The `projects` and `products` variables in `variables.tf` contain **placeholder** values for demonstration purposes. They do **not** correspond to real production resources.
+
+> **Do not apply the defaults to a live account.** Override them in `terraform.tfvars` with your actual organizational structure before running `terraform apply`. See [Customization](#customization) below.
+
+**Default Projects:**
+
+| Key | Name |
+|-----|------|
+| `project_a` | Project A |
+| `project_b` | Project B |
+| `project_c` | Project C |
+| `project_d` | Project D |
+
+**Default Products:**
+
+| Key | Name | Parent Project |
+|-----|------|----------------|
+| `alpha` | Product Alpha | `project_a` |
+| `beta` | Product Beta | `project_a` |
+| `gamma` | Product Gamma | `project_b` |
+| `delta` | Product Delta | `project_c` |
+| `epsilon` | Product Epsilon | `project_d` |
+
 ## Customization
 
-Edit `terraform.tfvars` to define your organizational hierarchy. The default structure includes example Projects and Products that can be replaced with your actual structure. The Solution (MB.OC) is fixed and represents the top level of the hierarchy.
+To align this configuration with your actual organizational structure, override the `projects` and `products` variables in `terraform.tfvars`. The Solution (MB.OC) is fixed and does not need to be configured.
 
-Member management: Teams are created with empty `member_ids`. Add members through the LaunchDarkly UI or API. The configuration uses `ignore_changes` on `member_ids` to prevent Terraform from managing membership directly.
+### Defining your Projects
+
+Add a `projects` block to `terraform.tfvars`. Each key becomes the internal identifier used to link Products to Projects:
+
+```hcl
+projects = {
+  payments = {
+    name = "Payments Platform"
+  }
+  checkout = {
+    name = "Checkout Experience"
+  }
+  logistics = {
+    name = "Logistics & Fulfillment"
+  }
+}
+```
+
+### Defining your Products
+
+Add a `products` block to `terraform.tfvars`. Each Product must reference a valid `project_key` from the `projects` map above:
+
+```hcl
+products = {
+  payments_api = {
+    name        = "Payments API"
+    project_key = "payments"
+  }
+  fraud_detection = {
+    name        = "Fraud Detection"
+    project_key = "payments"
+  }
+  cart = {
+    name        = "Shopping Cart"
+    project_key = "checkout"
+  }
+  shipping = {
+    name        = "Shipping Service"
+    project_key = "logistics"
+  }
+}
+```
+
+### Excluding Projects from Terraform
+
+If certain projects are managed via the LaunchDarkly UI and you want to avoid conflicts with Terraform, set `managed = false` on those projects. Terraform will skip the project's team, and automatically skip all products (teams + views) that belong to it.
+
+```hcl
+projects = {
+  payments = {
+    name = "Payments Platform"
+  }
+  checkout = {
+    name    = "Checkout Experience"
+    managed = false  # this project's resources are managed via the UI
+  }
+}
+
+products = {
+  payments_api = {
+    name        = "Payments API"
+    project_key = "payments"        # managed — Terraform creates team + view
+  }
+  cart = {
+    name        = "Shopping Cart"
+    project_key = "checkout"        # automatically excluded (parent project is unmanaged)
+  }
+}
+```
+
+When `managed` is omitted it defaults to `true`, so existing configurations are unaffected.
+
+### What gets created from these variables
+
+For the first example above (all projects managed), Terraform would create:
+
+- **3 Project Teams**: `Payments Platform`, `Checkout Experience`, `Logistics & Fulfillment`
+- **4 Product Teams**: `Payments API`, `Fraud Detection`, `Shopping Cart`, `Shipping Service`
+- **4 Views**: one per Product, scoped to that Product's feature flags
+- **1 Solution Team**: MB.OC (always created, with access to all managed Views)
+
+Each Project Team gets access to all Views belonging to its Products (e.g. the `Payments Platform` team sees both `Payments API` and `Fraud Detection` Views). Each Product Team gets access to only its own View.
+
+### Member management
+
+Teams are created with empty `member_ids`. Add members through the LaunchDarkly UI or API. The configuration uses `ignore_changes` on `member_ids` to prevent Terraform from overwriting membership on subsequent applies.
